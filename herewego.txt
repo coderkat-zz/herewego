@@ -1,0 +1,47 @@
+### using feedparser ###
+'''
+http://pythonhosted.org/feedparser/introduction.html
+parse from a remote url:
+
+import feedparser
+
+d = feedparser.parse('http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml')
+d['feed']['title']
+>>u'NYT >Home Page'
+
+can also parse from local files or strings
+
+all feed items available in d.entries, which is a list,
+ordered the same as the original feed
+
+accessing elements:
+
+d.entries[0].title
+d.entries[0].link
+d.entries[0].description
+d.entries[0].published
+d.entries[0].id 
+
+can access multiple links
+
+can test if elements are present:
+'title' in d.feed --> True
+'ttl' in d.feed --> False
+d.feed.get('title', 'No title')
+
+
+NYT:
+title: headline
+description: abstract + TONS OF CRAP
+tags: returns list of dicts, each w/key 'term' mapped to keywords?
+  for i in d.entries[0].tags:
+  		print i['term']
+  	prints list of tags/keywords
+RSS does not contain full text of articles
+
+summary: abstract + TONS OF CRAP
+author: 'By STEVEN ERLANGER and DAVID JOLLY'
+
+*** dealing with full content -->
+	can grab url from RSS, then read page with urllib2
+
