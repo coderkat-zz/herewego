@@ -25,7 +25,6 @@ def isolate_desc(rss):
 	description = (feedparser.parse(rss).entries[0].description.split('<'))[0]
 	return description
 
-
 # get a list of titles in rss feed
 def titles(rss):
 	titles = []
@@ -43,10 +42,28 @@ def urls(rss):
 	# return list of article urls from rss feed
 	for i in range(len(parsed.entries)):
 		urls.append(parsed.entries[i].link)
-	print urls
+	return urls
+
+# seed db! open rss file, read it, parse it, create object, 
+# add obj to session, commit, and repeat til done
+#TODO: GET THIS TO WORK?!
+def load_stories(source, session):
+	parsed = feedparser.parse(source)
+	for i in range(len(parsed.entries)):
+		title = parsed.entries[i].title
+		url = parsed.entries[i].link
+		abstract = (parsed.entries[i].description.split('<'))[0]
+		# story = model.Stories(title=title, url=url, abstract=abstract)
+		# session.add(user)
+		# session.commit()
+
+
+def load_tags(session):
+	pass
+
 
 def main():
-	urls(nyt)
+	load_stories(nyt)
 
 if __name__ == "__main__":
 	main()
