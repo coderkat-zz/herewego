@@ -1,5 +1,28 @@
+RSS sources:
+
+NYTimes feeds (home page(us/global), world, us, business, technology, sports, science, health, arts, style, travel)
+
+BBC News feeds (top stories, world, uk, business, politics, health, education&family, scince&environment, tech, entertainment&arts) 
+
+NPR feeds (news headlines, arts&culture, business, health&science, opinion, people&places, politics, us news, world news)
+
+CNN feeds (top stories, world, us, business, politics, crime, tech, health, entertainment, travel, living)
+
+ABC News feeds (top stories, world, us, politics, money, technology, health, entertainment, travel, sports)
+
+CNET (latest news)
+
+Reuters (arts, business, entertainment, health, lifestyle, media, money, politics, science, sports, tech, top news, us news, world)
+
+Fox?(bllllggghhhh)(ok fine) (latest headlines, entertainment, health, lifestyle, most popular, opinion, politics, scitech, sports, travel, us, world)
+
+tags: == NTY ('tags') 
+	  != npr
+	  != bbc
+	  != cnn
+	  
 ### using feedparser ###
-'''
+
 http://pythonhosted.org/feedparser/introduction.html
 parse from a remote url:
 
@@ -15,14 +38,15 @@ all feed items available in d.entries, which is a list,
 ordered the same as the original feed
 
 accessing elements:
-
+**most important**
 d.entries[0].title
 d.entries[0].link
 d.entries[0].description
 d.entries[0].published
+
 d.entries[0].id 
 
-can access multiple links
+can also access multiple links
 
 can test if elements are present:
 'title' in d.feed --> True
