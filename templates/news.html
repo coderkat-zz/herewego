@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1> testing </h1>
+
+<table>
+  {% for story in story_list %}
+    <tr>
+    	<td><a href="{{ story.url }}"> {{ story.title }}</a> ({{ story.source }})</td>
+    	<td> 
+			<form action="{{ url_for('like') }}" method="post">
+						<input type="hidden" name="story_id" value={{ story.id  }}>
+						<button  class="btn-small" type="submit" value="Submit">Yes</button></form>
+		</td>
+<td> 
+			<form action="{{ url_for('dislike') }}" method="post">
+						<input type="hidden" name="story_id" value={{ story.id }}>
+						<button  class="btn-small" type="submit" value="Submit">No</button></form>
+		</td>
+	</tr>
+    <tr>
+		<td>{{ story.abstract }}</td></tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}
