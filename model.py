@@ -2,7 +2,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship, backref
-
+import os
 
 # db interactions with sessions
 engine = create_engine("sqlite:///news.db", echo=True)
@@ -19,6 +19,16 @@ class Stories(Base):
 	abstract = Column(String(256))
 	url = Column(String(128))
 	source = Column(String(128))
+
+class Queue(Base):
+	__tablename__ = "queue"
+
+	id = Column(Integer, primary_key=True)
+	story_id = Column(Integer, ForeignKey("stories.id"))
+	score = Column(Integer)
+
+	story = relationship("Stories", backref=backref("queue", order_by=id))
+
 
 class Users(Base):
 	__tablename__ = "users"

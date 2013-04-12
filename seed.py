@@ -1,6 +1,9 @@
 import model
 import sqlalchemy.exc
 import feedparser # python library that parses feeds in RSS, Atom, and RDF
+import random
+from model import session as db_session, Users, Stories, Preferences, Queue
+
 
 sources = {"New York Times":'http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', "NPR News":'http://www.npr.org/rss/rss.php?id=1001', "BBC":'http://feeds.bbci.co.uk/news/rss.xml', "CNN":'http://rss.cnn.com/rss/cnn_topstories.rss'}
 
@@ -23,13 +26,41 @@ def load_stories(source, session):
 		session.add(story)
 		# commit 
 		session.commit()
-		
-def load_tags(source, session):
-	pass
+
+def load_queue(session):
+	stories = db_session.query(Stories).all()
+	queue = {}
+	for item in stories:
+		# assign a random score between 0.0 and 1.0 to story
+		# this (obviously) will also change once algorithm in place
+		queue[item.id]=random.random()
+	# by iterating through dict as (key, val) tuples, find items rated above 0.95 & put them in a list of story_ids
+	high = [key for (key, value) in queue.items() if value>0.97]
+	for i in high:
+		story_id = i
+		score = queue[i]
+		# go ahead and add this nonsense to the queue table in the db: will I need this? I have no idea. 
+		story = Queue(story_id=story_id, score=score)
+		db_session.add(story)
+		db_session.commit()
+	#grab some that are rated lower?
+	low = [key for (key, value) in queue.items() if 0.75<value<0.77]
+	for i in low:
+		story_id = i
+		score = queue[i]
+		# go ahead and add this nonsense to the queue table in the db: will I need this? I have no idea. 
+		story = Queue(story_id=story_id, score=score)
+		db_session.add(story)
+		db_session.commit()
+
+
+
 
 def main(session):
-	for item in sources:
-		load_stories(item, session)
+	# for item in sources:
+	# 	load_stories(item, session)
+
+	load_queue(session)
 
 if __name__ == "__main__":
 	s = model.session
