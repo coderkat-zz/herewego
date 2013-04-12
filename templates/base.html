@@ -4,10 +4,24 @@
 	{% block head %}
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="css/bootstrap.css") }}">
 	<title>{% block title %}{% endblock %}</title>
-	{% endblock %}
+		{% endblock %}
+
 </head>
 
 <body>
+	<div class="container-fluid" >
+
+
+ {% if session['email'] %}
+
+  <!-- Sign-in status-->
+  <div align=right>You are currently signed in as: {{ session['email'] }}.</div>
+
+	{% else %}
+	  <div align=right><a href="{{ url_for('login') }}">Click here to login.</a></div>
+
+	{% endif %}
+
 	{% with messages = get_flashed_messages() %}
 		{% if messages %}
 			{% for message in messages %}
@@ -19,5 +33,6 @@
 
 	{% block content %}{% endblock %}
 
+</div>
 </body>
 </html>

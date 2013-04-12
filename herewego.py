@@ -41,24 +41,27 @@ def news():
 	stories_list = model.session.query(model.Stories).limit(10).all()
 	return render_template("news.html", story_list = stories_list)
 
+# TO DO: for preference routes, make story diappear from page view after button click action
 @app.route("/like", methods=["POST"])
 def like():
-	story = request.form("story_id")
+	story = request.form["story_id"]
 	new_like = model.Preferences(story_id=story, user_id=session['user_id'], preference=1)
 
 	model.session.add(new_like)
 	model.session.commit()
-	return redirect(url_for('news'))
+	return redirect(url_for('selected'))
 
-
+# TO DO: for preference routes, make story diappear from page view after button click action
 @app.route("/dislike", methods=["POST"])
 def dislike():
-	story = request.form("story_id")
+	story = request.form["story_id"]
 	new_dislike = model.Preferences(story_id=story, user_id=session['user_id'], preference=0)
 
 	model.session.add(new_dislike)
 	model.session.commit()
 	return redirect(url_for('news'))
+
+
 
 
 if __name__ == "__main__":

@@ -2,28 +2,39 @@
 
 {% block content %}
 
+<div class="hero-unit">
 <h1> testing </h1>
+</div>
 
-<table>
+
   {% for story in story_list %}
-    <tr>
-    	<td><a href="{{ story.url }}"> {{ story.title }}</a> ({{ story.source }})</td>
-    	<td> 
-			<form action="{{ url_for('like') }}" method="post">
-						<input type="hidden" name="story_id" value={{ story.id  }}>
-						<button  class="btn-small" type="submit" value="Submit">Yes</button></form>
-		</td>
-<td> 
-			<form action="{{ url_for('dislike') }}" method="post">
-						<input type="hidden" name="story_id" value={{ story.id }}>
-						<button  class="btn-small" type="submit" value="Submit">No</button></form>
-		</td>
-	</tr>
-    <tr>
-		<td>{{ story.abstract }}</td></tr>
 
+
+    <div class="row">
+      <h5><a href="{{ story.url }}"> {{ story.title }}</a> ({{ story.source }})</h5>
+      </div>
+    <div class="row">
+      <div class="span10">
+	  {{ story.abstract }}
+	</div>
+</div>
+
+	    <div class="row">
+    <div class="span2"> 
+	  <form action="{{ url_for('like') }}" method="post">
+		<input type="hidden" name="story_id" value={{ story.id  }}>
+		  <button  class="btn-small" type="submit" value="Submit">Yes</button></form>
+		</div> <!-- span4 -->
+	<div class="span2">
+		<form action="{{ url_for('dislike') }}" method="post">
+		  <input type="hidden" name="story_id" value={{ story.id }}>
+			<button  class="btn-small" type="submit" value="Submit">No</button></form>
+		</div><!--span4-->
+
+    </div><!--endrow-->
 {% endfor %}
 
-</table>
+
+
 
 {% endblock %}
