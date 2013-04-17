@@ -11,6 +11,8 @@ session = scoped_session(sessionmaker(bind=engine, autocommit=False, autoflush=F
 Base = declarative_base() # required for sqlalchemy magics
 Base.query = session.query_property()
 
+# think about table names, not pluralizing ALL THE THINGS
+
 class Stories(Base):
 	__tablename__ = "stories" # store instances of this class in tbl 'stories'
 
@@ -20,15 +22,17 @@ class Stories(Base):
 	url = Column(String(128))
 	source = Column(String(128))
 
+# mapping table: predicted relationship b/t user and story
 class Queue(Base):
 	__tablename__ = "queue"
 
 	id = Column(Integer, primary_key=True)
+	user_id = Column(Integer, ForeignKey("users.id"))
 	story_id = Column(Integer, ForeignKey("stories.id"))
-	score = Column(Integer)
+	score = Column(Integer) # calculated value
 
 	story = relationship("Stories", backref=backref("queue", order_by=id))
-
+	user = relationship("Users", backref=backref("queue", order_by=id))
 
 class Users(Base):
 	__tablename__ = "users"
