@@ -3,7 +3,16 @@ import math
 import sqlite3 as sqlite
 import sys
 from sys import argv
+from decruft import Document
+import urllib2
+from bs4 import BeautifulSoup
 
+def gettext(url):
+	f = urllib2.urlopen(url)
+	w = (Document(f.read()).summary())
+	soup = BeautifulSoup(w)
+	text = (soup.get_text())
+	return text
 
 def getwords(doc):
 	# list of common words we want to ignore from our corpus
@@ -12,7 +21,7 @@ def getwords(doc):
 	# TODO: also remove numbers??
 	splitter = re.compile('\\W*')
 	# lowercase all words, discount short & common words
-	words = [s.lower() for s in splitter.split(doc) if len(s)>2 and s not in commonWords]
+	words = [s.lower() for s in splitter.split(doc) if len(s)>2 and s not in commonWords and not s.isdigit()]
 	# return a list of words from source
 	return words
 
@@ -198,38 +207,52 @@ class fisherclassifier(classifier):
 
 def main():
     args = argv
-    script, yes_text, no_text, test_text = args
+    script, url, learn_guess, classification = args
 
-    f = open(yes_text)
-    # store string of text from file
-    yescorpus = f.read()
-    f.close
+    # script, yes_text, no_text, test_text = args
 
-    f = open(no_text)
-    nocorpus = f.read()
-    f.close
+    # f = open(yes_text)
+    # # store string of text from file
+    # yescorpus = f.read()
+    # f.close
 
-    f = open(test_text)
-    testtext = f.read()
-    f.close
+    # f = open(no_text)
+    # nocorpus = f.read()
+    # f.close
 
+    # f = open(test_text)
+    # testtext = f.read()
+    # f.close
+    if learn_guess == 'train':
+    	doc = gettext(url)
+    	cl = fisherclassifier(getwords)
+    	cl.setdb('test1.db')
+    	cl.train(doc, classification)
+    	print 'trained that db'
 
-    doc = yescorpus
-    cl = fisherclassifier(getwords)
-    cl.setdb('test1.db')
-    cl.train(doc, 'yes')
+    if learn_guess == 'guess':
+    	doc = gettext(url)
+    	cl = fisherclassifier(getwords)
+    	cl.setdb('test1.db')
+    	print "Test article classified as " + cl.classify(doc)
+    	print cl.fisherprob(doc, classification), classification
 
-    doc2 = nocorpus
-    cl2 = fisherclassifier(getwords)
-    cl2.setdb('test1.db')
-    cl2.train(doc2, 'no')
+    
+    # doc = yescorpus
+    # cl = fisherclassifier(getwords)
+    # cl.setdb('test1.db')
+    # cl.train(doc, 'yes')
 
-    doc3 = testtext
-    cl3 = fisherclassifier(getwords)
-    cl3.setdb('test1.db')
-    print "Test article classified as " + cl3.classify(doc3)
+    # doc2 = nocorpus
+    # cl2 = fisherclassifier(getwords)
+    # cl2.setdb('test1.db')
+    # cl2.train(doc2, 'no')
 
-    print cl3.fisherprob(doc3, 'yes')
+    # doc3 = testtext
+    # cl3 = fisherclassifier(getwords)
+    # cl3.setdb('test1.db')
+    # print "Test article classified as " + cl3.classify(doc3)
+    # print cl3.fisherprob(doc3, 'yes') + "chance that user will like it."
 
 
 
