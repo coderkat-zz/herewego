@@ -5,14 +5,16 @@ import sys
 from sys import argv
 from decruft import Document
 import urllib2
-from bs4 import BeautifulSoup
+from pyquery import PyQuery
 
 def gettext(url):
+	# use decruft methods to grab article from page html
 	f = urllib2.urlopen(url)
-	w = (Document(f.read()).summary())
-	soup = BeautifulSoup(w)
-	text = (soup.get_text())
-	return text
+	html = (Document(f.read()).summary())
+	# use pyquery to get rid of all markup: just leave article text
+	doc = PyQuery(html)
+	article = doc.text()
+	return article
 
 def getwords(doc):
 	# list of common words we want to ignore from our corpus
@@ -29,7 +31,7 @@ def getwords(doc):
 # With this, we can instantiate multiple classifiers for different 
 # users, groups, or queries & can train differently to respond to 
 # particular needs
-class classifier:
+class Classifier:
 	def __init__(self, getfeatures):
 
 		# fc stores counts for different features in diferent 
@@ -142,10 +144,10 @@ class classifier:
 # freqsum = Sum of Pr(feature|category) for ALL categories
 # cprob = clf / (clf + nclf)
 ###############################################################################
-class fisherclassifier(classifier):
+class FisherClassifier(classifier):
 	# init method w/variable to store cutoffs
 	def __init__(self, getfeatures):
-		classifier.__init__(self, getfeatures)
+		Classifier.__init__(self, getfeatures)
 		self.minimums={}
 
 	# set mins and get values (default to 0)
@@ -206,58 +208,26 @@ class fisherclassifier(classifier):
 		return best
 
 def main():
+	# TO DO: this setup needs to change to integrate with actions from 
+	# herewego.py (user selecting yes/no, designing the queue)
     args = argv
     script, url, learn_guess, classification = args
 
-    # script, yes_text, no_text, test_text = args
-
-    # f = open(yes_text)
-    # # store string of text from file
-    # yescorpus = f.read()
-    # f.close
-
-    # f = open(no_text)
-    # nocorpus = f.read()
-    # f.close
-
-    # f = open(test_text)
-    # testtext = f.read()
-    # f.close
     if learn_guess == 'train':
     	doc = gettext(url)
-    	cl = fisherclassifier(getwords)
+    	cl = FisherClassifier(getwords)
     	cl.setdb('test1.db')
     	cl.train(doc, classification)
     	print 'trained that db'
 
     if learn_guess == 'guess':
     	doc = gettext(url)
-    	cl = fisherclassifier(getwords)
+    	cl = FisherClassifier(getwords)
     	cl.setdb('test1.db')
     	print "Test article classified as " + cl.classify(doc)
     	print cl.fisherprob(doc, classification), classification
-
-    
-    # doc = yescorpus
-    # cl = fisherclassifier(getwords)
-    # cl.setdb('test1.db')
-    # cl.train(doc, 'yes')
-
-    # doc2 = nocorpus
-    # cl2 = fisherclassifier(getwords)
-    # cl2.setdb('test1.db')
-    # cl2.train(doc2, 'no')
-
-    # doc3 = testtext
-    # cl3 = fisherclassifier(getwords)
-    # cl3.setdb('test1.db')
-    # print "Test article classified as " + cl3.classify(doc3)
-    # print cl3.fisherprob(doc3, 'yes') + "chance that user will like it."
-
-
 
 
 
 if __name__ == "__main__":
     main()
-# RIGHT NOW: every time classifying.py is run, the db is updated with the same corpus just run again as new data. This could be great if this file ran every time someone gave a thumbs up or thumbs down... however, may not be the most efficient.
