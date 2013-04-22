@@ -3,6 +3,7 @@ from flask import url_for, g, flash
 import model
 import random
 from model import session as db_session, Users, Stories, Preferences, Queue
+# import pyres
 
 app = Flask(__name__)
 app.secret_key = "bananabananabanana"        

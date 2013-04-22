@@ -7,6 +7,7 @@ from decruft import Document
 import urllib2
 from pyquery import PyQuery
 
+
 def gettext(url):
 	# use decruft methods to grab article from page html
 	f = urllib2.urlopen(url)
