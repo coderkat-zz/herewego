@@ -1,0 +1,15 @@
+Flask==0.9
+Flask-SQLAlchemy==0.16
+Flask-WTF==0.8
+Jinja2==2.6
+SQLAlchemy==0.7.9
+WTForms==1.0.2
+Werkzeug==0.8.3
+wsgiref==0.1.2
+pyres
+lxml
+pyquery
+APScheduler==2.0.3
+-U Celery
+-U celery-with-redis
+-U pytz
