@@ -3,10 +3,17 @@ from flask import url_for, g, flash
 import model
 import random
 from model import session as db_session, Users, Stories, Preferences, Queue
-# import pyres
+import pyres
+from pyres import ResQ 
+import classifying
+from classifying import Classifier
 
 app = Flask(__name__)
-app.secret_key = "bananabananabanana"        
+app.secret_key = "bananabananabanana"     
+
+# define redis server
+r = ResQ(server="localhost:6379") 
+
 
 @app.route("/")
 def index():
@@ -65,21 +72,25 @@ def news():
 # TO DO: for preference routes, make story diappear from page view after button click action
 @app.route("/like", methods=["POST"])
 def like():
-	story = request.form["story_id"]
-	new_like = model.Preferences(story_id=story, user_id=session['user_id'], preference=1)
-
-	model.session.add(new_like)
-	model.session.commit()
+	story_id = request.form["story_id"]
+	user_id = session['user_id']
+	# query story table in db to get url
+	story = model.session.query(model.Stories).filter_by(id=story_id).first()
+	# add the classifier job to the pyres queue
+	r.enqueue(Classifier, story.url, user_id, "yes")
+	# return user to news page
 	return redirect(url_for('news'))
 
 # TO DO: for preference routes, make story diappear from page view after button click action???
 @app.route("/dislike", methods=["POST"])
 def dislike():
-	story = request.form["story_id"]
-	new_dislike = model.Preferences(story_id=story, user_id=session['user_id'], preference=0)
-
-	model.session.add(new_dislike)
-	model.session.commit()
+	story_id = request.form["story_id"]
+	user_id = session['user_id']
+	# query story table in db to get url
+	story = model.session.query(model.Stories).filter_by(id=story_id).first()
+	# add the classifier job to the pyres queue
+	r.enqueue(Classifier, story.url, user_id, "no")
+	# send user back to news page like nothing is taking any time
 	return redirect(url_for('news'))
 
 @app.route("/logout")
