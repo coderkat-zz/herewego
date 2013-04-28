@@ -1,5 +1,5 @@
-import os, sys
-from flask import Flask, render_template, redirect, request, session
+import os, from
+sys flask import Flask, render_template, redirect, request, session
 from flask import url_for, g, flash
 import model
 import random
@@ -17,7 +17,7 @@ from feedseed import *
 
 
 app = Flask(__name__)
-app.secret_key = "bananabananabanana"     
+app.secret_key = "hidethiskey"     
 
 # define redis server
 r = ResQ(server="localhost:6379") 
