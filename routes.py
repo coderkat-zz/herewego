@@ -3,72 +3,25 @@ from flask import Flask, render_template, redirect, request, session
 from flask import url_for, g, flash
 import model
 import random
-from model import session as db_session, Users, Stories, Preferences, Queue
+from model import session as db_session, Users, Stories, FC, CC, Queue
 import pyres
 from pyres import ResQ 
-from pyres_scheduler import PyresScheduler
-from pyres_scheduler.decorators import periodic_task, timedelta
 import classifying
 from classifying import *
-# from apscheduler.scheduler import Scheduler
-# from datetime import datetime
-# import sqlalchemy.exc
-# import feedparser
-# stuff for pyres-scheduler, abandoning for apscheduler (For now)
-# import pyres_scheduler
-# from pyres_scheduler import PyresScheduler
-# from pyres_scheduler.decorators import periodic_task, timedelta
+import feedseed
+from feedseed import *
+from apscheduler.scheduler import Scheduler
+from datetime import datetime
+import feedseed
+from feedseed import * 
+
 
 app = Flask(__name__)
 app.secret_key = "bananabananabanana"     
 
 # define redis server
 r = ResQ(server="localhost:6379") 
-# setup for pyres scheduler
-# pyres_sched = PyresScheduler()
-# resque = ResQ()
-# pyres_sched.add_resque(resque)
 
-# sources = {"BBC":'http://feeds.bbci.co.uk/news/rss.xml', "New York Times":'http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', "NPR News":'http://www.npr.org/rss/rss.php?id=1001', "CNN":'http://rss.cnn.com/rss/cnn_topstories.rss'}
-
-# sched = Scheduler()
-# sched.start()
-
-# # @periodic_task(priority="high", run_every=timedelta(seconds=10))
-# @sched.interval_schedule(minutes=1)
-# def get_news():
-# 	for source in sources:
-# 		load_stories(source, session)
-
-
-# def load_stories(source, session):
-# 		# seed db! open rss file, read it, parse it, create object, 
-# 		# add obj to session, commit, and repeat til done
-# 	print source
-# 	# use feedparser to grab & parse the rss feed
-# 	parsed = feedparser.parse(sources[source])
-# 	print parsed
-# 	# go through each entry in the RSS feed to pull out elements for Stories
-# 	for i in range(len(parsed.entries)):
-# 		title = parsed.entries[i].title
-# 		print "Did we get it??"
-# 		print title
-# 		url = parsed.entries[i].link
-# 		source = source
-# 		# pull abstract, parse out extra crap that is sometimes included 
-# 		abstract = (parsed.entries[i].description.split('<'))[0]
-# 		# connect with db
-# 		story = model.Stories(title=title, url=url, abstract=abstract, source=source)
-# 		# add story to db
-# 		session.add(story)
-# 		# commit 
-# 		session.commit()
-# 		print "all done"
-
-# pyres_sched.start()
-# # This is problematc. Wants a lot more args if it's here, and I'm not
-# # entirely sure where it should go in the first place. Wheeeeeee.
-# pyres_sched.add_job(get_news)
 
 @app.route("/")
 def index():
@@ -107,6 +60,12 @@ def validate_login():
 	if row: 		
 		session['email'] = request.form['email']
 		session['user_id'] = row.id
+
+		# enqueue classifying all urls in db. oh jeez.
+		r.enqueue(Probabilities, session['user_id'])
+		print "ENQUEUED!!!!!!"
+		print session['user_id']
+
 		flash('Logged in as: ' + session['email'])
 		return redirect("/news")		
 	else:

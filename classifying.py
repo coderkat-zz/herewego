@@ -59,7 +59,7 @@ class Classifier:
 		return words
 
 	@staticmethod 
-	def perform(url, classification):
+	def perform(url, classification, user_id):
 		# TO DO: Integrate user_id
 		
 		# grab article text, parse out markup and return list of significant words
@@ -68,49 +68,48 @@ class Classifier:
 		# need to make a Classifier instance in order to reference a class method
 		classifier = Classifier(artwords)
 		# set up db (or connect if exists)
-		classifier.setdb('test1.db')
-		print "set up the database"
+		classifier.setdb('news.db')
+		print "connect with the database"
 		# train db w/new words and their classifications
 		for item in artwords:
-			classifier.train(item, classification)
+			classifier.train(item, classification, user_id)
 		print "trained that database"
 
 	# method that opens the dbfile for this classifier and creates
 	# tables if necessary
 	def setdb(self, dbfile):
 		self.con = sqlite.connect(dbfile)
-		self.con.execute('create table if not exists fc(feature, category, count)')
-		self.con.execute('create table if not exists cc(category, count)')
+
 
 	# HELPER FUNCTIONS!!!! --> interact w/database
 	
 	# increase count of a feature/category pair by 1 in fc table
-	def incf(self, f, cat):
-		count = self.fcount(f, cat)
+	def incf(self, f, cat, user_id):
+		count = self.fcount(f, cat, user_id)
 		if count == 0:
-			self.con.execute("INSERT INTO fc VALUES ('%s', '%s', 1)" % (f, cat))
+			self.con.execute("INSERT INTO fc VALUES ('%s', '%s', 1, %d)" % (f, cat, user_id))
 		else:
-			self.con.execute("UPDATE fc SET count=%d WHERE feature='%s' and category='%s'" % (count+1, f, cat))
+			self.con.execute("UPDATE fc SET count=%d WHERE feature='%s' AND category='%s' AND user_id=%d" % (count+1, f, cat, user_id))
 
 	# number of times a feature has appeared in a category in fc table
-	def fcount(self, f, cat):
-		res = self.con.execute("SELECT count FROM fc WHERE feature='%s' AND category='%s'" %(f, cat)).fetchone()
+	def fcount(self, f, cat, user_id):
+		res = self.con.execute("SELECT count FROM fc WHERE feature='%s' AND category='%s' AND user_id=%d" %(f, cat, user_id)).fetchone()
 		if res == None:
 			return 0
 		else:
 			return float(res[0])
 
 	# increase the count of a category in cc table
-	def incc(self, cat):
-		count = self.catcount(cat)
+	def incc(self, cat, user_id):
+		count = self.catcount(cat, user_id)
 		if count == 0:
-			self.con.execute("INSERT INTO cc VALUES ('%s', 1)" % (cat))
+			self.con.execute("INSERT INTO cc VALUES ('%s', 1, %d)" % (cat, user_id))
 		else:
-			self.con.execute("UPDATE cc SET count=%d WHERE category='%s'"%(count+1, cat))
+			self.con.execute("UPDATE cc SET count=%d WHERE category='%s' AND user_id=%d"%(count+1, cat, user_id))
 
 	# query db for current category count
-	def catcount(self, cat):
-		res = self.con.execute("SELECT count FROM cc WHERE category='%s'"%(cat)).fetchone()
+	def catcount(self, cat, user_id):
+		res = self.con.execute("SELECT count FROM cc WHERE category='%s' AND user_id=%d"%(cat, user_id)).fetchone()
 		if res == None:
 			return 0
 		else:
@@ -133,24 +132,26 @@ class Classifier:
 	# (in our case, yes or no). Uses getfeatures func to break items into separate features,
 	# then increases counts for this classification for each feature, then increases total 
 	# count for classification
-	def train(self, item, cat):
+	def train(self, item, cat, user_id):
 		# increment count the item of this category
-		self.incf(item, cat)
+		self.incf(item, cat, user_id)
 		# increment count for this category
-		self.incc(cat)
+		self.incc(cat, user_id)
+		# # mark user id for each thing
+		# self.userid(user_id)
 		# save to db
 		self.con.commit()
 
 	# calculate probability that a word is in yes or no cats by dividing
 	# the number of times the word appears in a doc in that cat by total number
 	# of docs in that cat?
-	def fprob(self, f, cat):
+	def fprob(self, f, cat, user_id):
 		# check to see the current count of category occurances
-		if self.catcount(cat)==0: 
+		if self.catcount(cat, user_id)==0: 
 			return 0
 		# total number of times this feature appeared in this category divided by total items in this category
 		# Pr(A|B) --> conditional probability
-		return self.fcount(f, cat)/self.catcount(cat)
+		return self.fcount(f, cat, user_id)/self.catcount(cat, user_id)
 
 	# calculate a weighted probabiity with an assumed probability of 0.5
 	def weightedprob(self, f, cat, prf, weight=1.0, ap=0.5):
@@ -171,25 +172,30 @@ class Classifier:
 # cprob = clf / (clf + nclf)
 ###############################################################################
 class FisherClassifier(Classifier):
+	
+	# queue method to work with pyres, defines a queue for classify actions
+	# moved this to feedseed.py (which then talks to this doc)
+	# queue = "predict"
 
 	# init method w/variable to store cutoffs
 	def __init__(self, getfeatures):
 		Classifier.__init__(self, getfeatures)
 		self.minimums={}
-
-
-	# # queue method to work with pyres, defines a queue for classify actions
-	# queue = "predict"
 	
+
 	# # perform method to make this class compatible with pyres
+	# # moved this to feedseed.py (which then talks to classifier)
 	# @staticmethod
 	# def perform(url):
-	# 	doc = gettext(url)
- #    	cl = FisherClassifier(getwords)
- #    	cl.setdb('test1.db')
- #    	print "Test article classified as " + cl.classify(doc)
- #    	print cl.fisherprob(doc, classification), classification
-    	
+	# 	doc =  Classifier.gettext(url) # words
+	# 	# artwords = Classifier.getwords(Classifier.gettext(url))
+	# 	cl = FisherClassifier(Classifier.getwords) # returns instance 
+	# 	cl.setdb('news.db')
+	# 	print "done"
+	# 	print "Test article classified as " 
+	# 	classification = cl.classify(doc)
+	# 	print cl.fisherprob(doc, classification), classification
+
 
 	# set mins and get values (default to 0)
 	def setminimum(self, cat, min):
@@ -199,26 +205,31 @@ class FisherClassifier(Classifier):
 			return 0
 		return self.minimums[cat]
 
-	def cprob(self, f, cat):
+	def cprob(self, f, cat, user_id):
 		# frequency of this feature in this category
-		clf = self.fprob(f, cat)
+		clf = self.fprob(f, cat, user_id)
 		if clf == 0: 
 			return 0
 		# frequency of this feature in all categories
-		freqsum = sum([self.fprob(f,c) for c in self.categories()])
+		freqsum = sum([self.fprob(f,c, user_id) for c in self.categories()])
 		# probability is the frequency in this category divided by overall frequency
 		p = clf / (freqsum)
 		return p # the probability that an item w/feature belongs in specified category, assuming equal items in each cat.
 
 	# estimate overall probability: mult all probs together, take log, mult by -2
-	def fisherprob(self, item, cat):
+	def fisherprob(self, item, cat, user_id):
 		# multiply all probabilities together
 		p = 1
-		features = self.getfeatures(item)
-		for f in features:
-			p *= (self.weightedprob(f, cat, self.cprob))\
+		features = self.getwords(item) # list of words
+		for f in features: # iterate through list
+
+			p *= (self.weightedprob(f, cat, user_id, self.cprob)) # OH NOES. GETS TO ZERO.
+		# WHICH IS WHY FSCORE BREAKS. WTF HAPPENED.
+		# Note: does not happen on all articles.
+
 		# take natural log and multiply by -2
 		fscore = -2*math.log(p)
+
 		# use inverse chi2 function to get a probability
 		return self.invchi2(fscore, len(features)*2)
 
@@ -250,26 +261,36 @@ class FisherClassifier(Classifier):
 
 def main():
 	print "Main 1"
-	Classifier.perform(url="http://www.bbc.co.uk/news/world-europe-22261494", classification="yes")
+	# Classifier.perform(url="http://www.bbc.co.uk/news/world-europe-22261494", classification="yes")
+	# FisherClassifier.perform(url="http://www.bbc.co.uk/news/world-europe-22261494")
 
 	# TO DO: this setup needs to change to integrate with actions from 
 	# herewego.py (user selecting yes/no, designing the queue)
-    # args = argv
-    # script, url, action, classification = args
+	# args = argv
+	# script, url, action = args
 
-    # if action == 'train':
-    # 	doc = gettext(url)
-    # 	cl = FisherClassifier(getwords)
-    # 	cl.setdb('test1.db')
-    # 	cl.train(doc, classification)
-    # 	print 'trained that db'
+	# if action == 'train':
+	# 	artwords = Classifier.getwords(Classifier.gettext(url))
+	# 	print "got the list of words"
+	# 	classifier = Classifier(artwords)
+	# 	classifier.setdb('news.db')
+	# 	print "set up the database"
+	# 	for item in artwords:
+	# 		classifier.train(item, classification)
+	# 	print "trained that database"
+		
 
-    # if action == 'guess':
-    # 	doc = gettext(url)
-    # 	cl = FisherClassifier(getwords)
-    # 	cl.setdb('test1.db')
-    # 	print "Test article classified as " + cl.classify(doc)
-    # 	print cl.fisherprob(doc, classification), classification
+	# if action == 'guess':
+	# 	doc =  Classifier.gettext(url) # words
+	# 	artwords = Classifier.getwords(Classifier.gettext(url))
+	# 	cl = FisherClassifier(Classifier.getwords) # returns instance 
+	# 	cl.setdb('news.db')
+	# 	print "done"
+	#  	print "Test article classified as " 
+	#  	classification = cl.classify(doc)
+	#  	print cl.fisherprob(doc, classification), classification
+
+
 
 if __name__ == "__main__":
     main()

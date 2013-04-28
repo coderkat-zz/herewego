@@ -13,6 +13,21 @@ Base.query = session.query_property()
 
 # think about table names, not pluralizing ALL THE THINGS
 
+# the flow:
+# user login => fetch all stories and classify for logged in user
+# --> after classification, shuttle into queue w/user_id, story_id, probability
+# --> pull top (and a few lower) stories from queue and display on news page
+
+class Users(Base):
+	__tablename__ = "users"
+
+	id = Column(Integer, primary_key=True)
+	email = Column(String(64))
+	password = Column(String(64))
+	name = Column(String(128))
+
+
+# story table: for all users' use, no foreign keys
 class Stories(Base):
 	__tablename__ = "stories" # store instances of this class in tbl 'stories'
 
@@ -26,44 +41,52 @@ class Stories(Base):
 class Queue(Base):
 	__tablename__ = "queue"
 
+	# TO DO: INTEGRATE USER_ID HERE!!!
+
 	id = Column(Integer, primary_key=True)
-	user_id = Column(Integer, ForeignKey("users.id"))
+	# user_id = Column(Integer, ForeignKey("users.id"))
 	story_id = Column(Integer, ForeignKey("stories.id"))
-	score = Column(Integer) # calculated value
+	user_id = Column(Integer, ForeignKey("users.id"))
+	score = Column(Integer) # calculated fisher probability for this item
 
 	story = relationship("Stories", backref=backref("queue", order_by=id))
 	user = relationship("Users", backref=backref("queue", order_by=id))
 
-class Users(Base):
-	__tablename__ = "users"
+# self.con.execute('create table if not exists fc(feature, category, count)')
+# self.con.execute('create table if not exists cc(category, count)')
+
+class FC(Base):
+	__tablename__ = "fc" #for feature classification
 
 	id = Column(Integer, primary_key=True)
-	email = Column(String(64))
-	password = Column(String(64))
-	name = Column(String(128))
-
-class Preferences(Base):
-	__tablename__ = "preferences" 
-
-	id = Column(Integer, primary_key=True)
+	feature = Column(String(64))
+	category = Column(String(32))
+	count = Column(Integer)
 	user_id = Column(Integer, ForeignKey("users.id"))
-	story_id = Column(Integer, ForeignKey("stories.id"))
-	preference = Column(Integer)
 
-	user = relationship("Users", backref=backref("preferences", order_by=id))
-	story = relationship("Stories", backref=backref("preferences", order_by=id))
+	user = relationship("Users", backref=backref("fc", order_by=id))
+
+class CC(Base):
+	__tablename__ = "cc" # for category classification
+
+	id = Column(Integer, primary_key=True)
+	category = Column(String(32))
+	count = Column(Integer)
+	user_id = Column(Integer, ForeignKey("users.id"))
+
+	user = relationship("Users", backref=backref("cc", order_by=id))
 
 
-
-# class Tags(Base):
-# 	__tablename__ = "tags" 
+# class Preferences(Base):
+# 	__tablename__ = "preferences" 
 
 # 	id = Column(Integer, primary_key=True)
+# 	user_id = Column(Integer, ForeignKey("users.id"))
 # 	story_id = Column(Integer, ForeignKey("stories.id"))
-# 	tag = Column(String(128), nullable=True)
-# 	source = Column(String(128), nullable=False)
+# 	preference = Column(Integer)
 
-# 	story = relationship("Stories", backref=backref("tags", order_by=id))
+# 	user = relationship("Users", backref=backref("preferences", order_by=id))
+# 	story = relationship("Stories", backref=backref("preferences", order_by=id))
 
 ### End class declarations
 # def connect():

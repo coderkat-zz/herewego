@@ -1,4 +1,11 @@
-# i think i'll need this separate file to create my workers to work with PyRes
+from rq import Queue, use_connection
+use_connection()
+q = Queue()
 
-# import classifying (and whatever else containing classes I'm using)
-# import tasks
+from clock import load_stories
+
+
+
+result = q.enqueue(load_stories)
+
+

@@ -1,0 +1,13 @@
+tar –zxf decruft<em>-x.y</em>.tgz
+export PYTHONPATH=$PYTHONPATH:$PWD/decruft
+
+python
+
+>>> from decruft import Document
+>>> import urllib2
+>>> f = urllib2.urlopen('url')
+>>> print Document(f.read()).summary()
+
+returns basic 'readable' html (strips ads and other content, leaves some images relevant to article, etc...)
+
+TO DO: STILL WILL HAVE TO PARSE THIS A LITTLE, WHOOF. 
