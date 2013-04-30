@@ -222,8 +222,9 @@ class FisherClassifier(Classifier):
 		p = 1
 		features = self.getwords(item) # list of words
 		for f in features: # iterate through list
-
+			print f
 			p *= (self.weightedprob(f, cat, user_id, self.cprob)) # OH NOES. GETS TO ZERO.
+
 		# WHICH IS WHY FSCORE BREAKS. WTF HAPPENED.
 		# Note: does not happen on all articles.
 

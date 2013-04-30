@@ -1,6 +1,6 @@
 from redis import Redis
 from rq import Queue
-from rqfun import load_stories
+from feedseed import load_stories
 from apscheduler.scheduler import Scheduler 
 
 sched = Scheduler()
@@ -17,4 +17,3 @@ def result():
 	q.enqueue(load_stories, model.session)
 
 sched.start()
-

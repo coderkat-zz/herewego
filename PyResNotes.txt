@@ -1,8 +1,0 @@
-AWESOME.
-
-To check up on pyres_worders:
- $ cd /env/bin
- $ pyres_manager Classifier <-- queue name
-
- Displays what's happening with workers and the queue (haha MY MINIONS)
- and logs when they get a job, what that job is, and if it failed or not. 
