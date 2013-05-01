@@ -5,8 +5,8 @@ import model
 from model import session as db_session, Users, Stories, FC, CC, Queue
 import pyres
 from pyres import ResQ
-from classify.classifying import Classifier
-from feedseed import Probabilities
+from classify.classifying import Classifier, FisherClassifier
+# from feedseed import Probabilities
 from apscheduler.scheduler import Scheduler
 
 
@@ -58,13 +58,8 @@ def firstlike():
     user_id = session['user_id']
     # query story table in db to get url
     story = model.session.query(model.InitStories).filter_by(id=story_id).first()
-    print "got story!!!"
-
-    Classifier.perform(story.url, 'yes' , user_id)
-    print "Classified??"
     # add the classifier job to the pyres queue
-    # r.enqueue(Classifier, story.url, user_id, "yes")
-    # print "enqueued!!!"
+    r.enqueue(Classifier, story.url, user_id, "yes")
 
 
     # return user to news page
@@ -80,12 +75,8 @@ def firstdislike():
     print "user = %s" % user_id
     # query story table in db to get url
     story = model.session.query(model.InitStories).filter_by(id=story_id).first()
-    print story
-    print "!!!!!STORY URL!!!!!"
-    print story.url
     # add the classifier job to the pyres queue
     r.enqueue(Classifier, story.url, user_id, "no")
-    print "enqueued?!?!"
     # send user back to news page like nothing is taking any time
     return redirect(url_for('selection'))
 
@@ -116,13 +107,16 @@ def validate_login():
 
 @app.route("/news")
 def news():
+    print "Now we do this classifying stuff"
     # enqueue by classifying all urls in db. oh jeez.
-    r.enqueue(Probabilities, session['user_id'])
-    print "ENQUEUED!!!!!!"
     print session['user_id']
+    FisherClassifier.perform(session['user_id'])
+
+    print "if this prints, we ran the fisher method!!"
 
     # grab all items in queue
     queue_list = model.session.query(model.Queue).all()
+    print queue_list
     # pull story info by using queued story_id reference???
     story_list = []
     for i in queue_list:
@@ -139,7 +133,7 @@ def like():
 	# query story table in db to get url
 	story = model.session.query(model.Stories).filter_by(id=story_id).first()
 	# add the classifier job to the pyres queue
-	r.enqueue(classify.Classifier, story.url, user_id, "yes")
+	r.enqueue(Classifier, story.url, user_id, "yes")
 	# return user to news page
 	return redirect(url_for('news'))
 
@@ -152,7 +146,7 @@ def dislike():
 	# query story table in db to get url
 	story = model.session.query(model.Stories).filter_by(id=story_id).first()
 	# add the classifier job to the pyres queue
-	r.enqueue(classify.Classifier, story.url, user_id, "no")
+	r.enqueue(Classifier, story.url, user_id, "no")
 	# send user back to news page like nothing is taking any time
 	return redirect(url_for('news'))
 

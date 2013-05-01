@@ -10,7 +10,7 @@ from classifying import *
 
 r = ResQ()
 
-sources = {"New York Times":'http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', "NPR News":'http://www.npr.org/rss/rss.php?id=1001', "BBC":'http://feeds.bbci.co.uk/news/rss.xml', "CNN":'http://rss.cnn.com/rss/cnn_topstories.rss'}
+sources = {"New York Times":'http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', "NPR News":'http://www.npr.org/rss/rss.php?id=1001'}
 
 # seed db! open rss file, read it, parse it, create object, 
 # add obj to session, commit, and repeat til done
@@ -37,7 +37,7 @@ class Probabilities():
 	queue = 'probability'
 	# static method to integrate with pyres
 	@staticmethod
-	def load_queue(session, user_id):
+	def perform(user_id):
 		
 		stories = db_session.query(Stories).all()
 		queue = {}
@@ -48,7 +48,7 @@ class Probabilities():
 			cl = FisherClassifier(Classifier.getwords) # returns instance 
 			cl.setdb('news.db')
 			classification = 'yes'
-
+			print "Here be the problem?"
 			# determine probability that user will like it
 			# TO DO: throw in a test for this coming back all screwy!
 			probability = cl.fisherprob(doc, classification, user_id)
@@ -84,10 +84,10 @@ class Probabilities():
 
 
 def main(session):
-	# for item in sources:
-	# 	load_stories(item, session)
+	for item in sources:
+		load_stories(item, session)
 
-	Probabilities.load_queue(session, 1)
+	# Probabilities.perform(0)
 
 if __name__ == "__main__":
 	s = model.session
