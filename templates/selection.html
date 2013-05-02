@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="hero-unit">
+<h1> Help us learn what you like! </h1>
+<!-- make this (obviously) more helpful for the UX -->
+<h2> Please mark each of these stories 'yes' or 'no' </h2>
+</div>
+
+
+  {% for story in story_list %}
+
+
+    <div class="row">
+      <h5><a href="{{ story.url }}"> {{ story.title }} </a></h5>
+      </div>
+    <div class="row">
+      <div class="span10">
+	  {{ story.abstract }}
+	</div>
+</div>
+
+	    <div class="row">
+    <div class="span2"> 
+	  <form action="{{ url_for('firstlike') }}" method="post">
+		<input type="hidden" name="story_id" value={{ story.id  }}>
+		  <button  class="btn-small" type="submit" value="Submit">Yes</button></form>
+		</div> <!-- span4 -->
+	<div class="span2">
+		<form action="{{ url_for('firstdislike') }}" method="post">
+		  <input type="hidden" name="story_id" value={{ story.id }}>
+			<button  class="btn-small" type="submit" value="Submit">No</button></form>
+		</div><!--span4-->
+
+    </div><!--endrow-->
+
+{% endfor %}
+
+<div class="row">
+  <h1><a href="{{ url_for('news') }}">Take me to the app, already</a></h1><br/>
+</div>
+
+
+
+{% endblock %}
