@@ -7,10 +7,11 @@ import pyres
 from pyres import ResQ
 from classify.classifying import Classifier, FisherClassifier
 from apscheduler.scheduler import Scheduler
+from local_settings import SECRET_KEY
 
 
 app = Flask(__name__)
-app.secret_key = "hidethiskey"
+app.secret_key = SECRET_KEY
 
 # define redis server
 r = ResQ(server="localhost:6379")
