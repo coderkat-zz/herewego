@@ -64,21 +64,17 @@ class Classifier:
 		return words
 
 	@staticmethod 
-	def perform(url, classification):
-		# TO DO: Integrate user_id
-		
+	def perform(url, user_id, classification):
 		# grab article text, parse out markup and return list of significant words
 		artwords = Classifier.getwords(Classifier.gettext(url))
-		print "got the list of words"
 		# need to make a Classifier instance in order to reference a class method
 		classifier = Classifier(artwords)
 		# set up db (or connect if exists)
 		classifier.setdb('news.db')
-		print "connect with the database"
 		# train db w/new words and their classifications
 		for item in artwords:
 			classifier.train(item, classification)
-		print "trained that database"
+
 
 	# method that opens the dbfile for this classifier and creates
 	# tables if necessary
@@ -114,14 +110,8 @@ class Classifier:
 
 	# query db for current category count
 	def catcount(self, cat):
-		# print "what category did I pass in, again?"
-		# print cat
 		res = self.con.execute("SELECT count FROM cc WHERE category='%s' AND user_id=%d"%(cat, self.user_id)).fetchone()
-		# above line WAS fetchall() a la collective intelligence
-		# print "CURRENT CATEGORY COUNT"
-		# print cat
-		# print user_id
-		# print res[0]
+
 		if res == None:
 			return 0
 		else:
@@ -129,12 +119,12 @@ class Classifier:
 
 	# the list of all existing categories:
 	def categories(self):
-		cur = self.con.execute("SELECT category FROM cc");
+		cur = self.con.execute("SELECT category FROM cc WHERE user_id=%d"%(self.user_id));
 		return [d[0] for d in cur]
 
 	# total number of items
 	def totalcount(self):
-		res = self.con.execute("SELECT sum(count) FROM cc").fetchone();
+		res = self.con.execute("SELECT sum(count) FROM cc WHERE user_id=%d"%(self.user_id)).fetchone();
 		if res == None:
 			return 0
 		else:
@@ -149,8 +139,6 @@ class Classifier:
 		self.incf(item, cat)
 		# increment count for this category
 		self.incc(cat)
-		# # mark user id for each thing
-		# self.userid(user_id)
 		# save to db
 		self.con.commit()
 
@@ -158,17 +146,11 @@ class Classifier:
 	# the number of times the word appears in a doc in that cat by total number
 	# of docs in that cat?
 	def fprob(self, f, cat):
-		# print "self.catcount --> "
-		# print self.catcount
-		# print "now we do stuff --> "
-		# print self.catcount(cat, user_id)
 		# check to see the current count of category occurances
 		if self.catcount(cat)==0: 
 			return 0
 		# total number of times this feature appeared in this category divided by total items in this category
 		# Pr(A|B) --> conditional probability
-		# print "we return -->"
-		# print self.fcount(f, cat, user_id)/self.catcount(cat, user_id)
 		return self.fcount(f, cat)/self.catcount(cat) #works! theoretically
 
 	# calculate a weighted probabiity with an assumed probability of 0.5
@@ -204,50 +186,58 @@ class FisherClassifier(Classifier):
 	# classify and pull relevant news stories for user's feed!
 	@staticmethod 
 	def perform(user_id):
-		print user_id
+		#start by clearing current queue db table for user
+		db_session.query(Queue).filter(Queue.user_id==user_id).delete()
+		db_session.commit()
+		# grab all RSS stories from Story table of db
 		stories = db_session.query(Stories).all()
-		print "got stories"
-		queue = {}
+		# set up a queue for ranked stories
+		queue = []
 		for item in stories:
 			# determine probability that the user will like this item
-			doc =  Classifier.gettext(item.url) # strong of article words
+			try:
+				doc = Classifier.gettext(item.url) # strong of article words
+			except Exception:
+				pass
 			cl = FisherClassifier(Classifier.getwords, user_id) # returns instance 
 			cl.setdb('news.db')
-			classification = 'yes'
-			print "Ready to Classify!!!"
-
-			# determine probability that user will like it
-			# TO DO: throw in a test for this coming back all screwy!
-			probability = cl.fisherprob(doc, user_id)
-
-			print "Got the probability that you'll looove this -->"
-			print probability
+			# find the probability that a user will like a given article
+			probability = cl.fisherprob(doc, 'yes')
+			if probability > 0:
 			# add item's probability to the queue dictionary
-			queue[item.id]=probability
-			print "Articles: aquired! -->"
-			print queue
-
-
-		# by iterating through dict as (key, val) tuples, find items rated above 0.97 & put them in a list of story_ids
-		high = [key for (key, value) in queue.items() if value>0.97]
-		for i in high:
-			story_id = i
-			score = queue[i]	
-			# add story, user, and probabiilty to the db for pulling articles for users
-			story = Queue(story_id=story_id, score=score, user_id=user_id)
-			db_session.add(story)
-			db_session.commit()
+				tup = (item.id, probability)
+				queue.append(tup)
+				# queue[item.id]=probability
+		# sort queue by probability, lowest --> highest
+		queue = sorted(queue, key=lambda x: x[1])
+		print queue
 		
-		#grab some that are rated lower
-		low = [key for (key, value) in queue.items() if 0.75<value<0.77]
-		for i in low:
-			story_id = i
-			score = queue[i]
-			# add story, user, and probabiilty to the db for pulling articles for users
-			story = Queue(story_id=story_id, score=score, user_id=user_id)
-			db_session.add(story)
-			db_session.commit()
 
+		# grab top and lower rated stories
+		if len(queue)>=10:
+			for i in queue[:2]:
+				story_id = i[0]
+				score = i[1]
+				# add story, user, and probabiilty to the db for pulling articles for users
+				story = Queue(story_id=story_id, score=score, user_id=user_id)
+				db_session.add(story)
+			for i in queue[-8:]:
+				story_id = i[0]
+				score = i[1]
+				# add story, user, and probabiilty to the db for pulling articles for users
+				story = Queue(story_id=story_id, score=score, user_id=user_id)
+				db_session.add(story)
+
+			db_session.commit()
+		else:
+			for i in queue:
+				story_id = i[0]
+				score = i[1]
+				# add story, user, and probabiilty to the db for pulling articles for users
+				story = Queue(story_id=story_id, score=score, user_id=user_id)
+				db_session.add(story)
+				db_session.commit()
+		
 
 	# set mins and get values (default to 0)
 	def setminimum(self, cat, min):
@@ -271,18 +261,14 @@ class FisherClassifier(Classifier):
 	# estimate overall probability: mult all probs together, take log, mult by -2
 	def fisherprob(self, item, cat):
 		# multiply all probabilities together
-		p = 1
+	
 		features = self.getwords(item) # list of words
-		print "got words: items in a list"
-		print features
-
+		p = 1
 		for f in features: # iterate through list
-			print f
-			p *= (self.weightedprob(f, cat, self.cprob)) 
-			print p   # OH NOES. SOMETIMES GETS TO ZERO.
-		# WHICH IS WHY FSCORE BREAKS. WTF HAPPENED.
-		# Note: does not happen on all articles.
-
+			p = p*(self.weightedprob(f, cat, self.cprob)) 
+			# account for articles that are wildly not aligned with user's interests, since log(0) will break the classifier...
+			if p == 0:
+				return 0
 		# take natural log and multiply by -2
 		fscore = (-2)*math.log(p)
 
@@ -301,21 +287,6 @@ class FisherClassifier(Classifier):
 			sum += term
 		return min(sum, 1.0)
 
-	## UH THIS IS NEVER USED NOW?? MAKE SURE BEFORE REMOVING
-	# # calculate probabilites for each category and determine the best
-	# # result that exceeds the specified minimum
-	# def classify(self, item, user_id, default=None):
-	# 	# loop through looking for best result
-	# 	best = default
-	# 	max = 0.0
-	# 	for c in self.categories():
-	# 		p = self.fisherprob(item, c)
-	# 		print p
-	# 		# make sure it exceeds its minimum
-	# 		if p > self.getminimum(c) and p > max:
-	# 			best = c
-	# 			max = p
-	# 	return best
 
 def main():
 	print "Main 1"

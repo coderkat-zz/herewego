@@ -46,6 +46,7 @@ class Queue(Base):
 	story_id = Column(Integer, ForeignKey("stories.id"))
 	user_id = Column(Integer, ForeignKey("users.id"))
 	score = Column(Integer) # calculated fisher probability for this item
+	liked = Column(Integer)
 
 	story = relationship("Stories", backref=backref("queue", order_by=id))
 	user = relationship("Users", backref=backref("queue", order_by=id))
