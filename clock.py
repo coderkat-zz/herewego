@@ -4,13 +4,15 @@ from model import session as db_session, Users, Stories, FC, CC, Queue
 from classify.classifying import FisherClassifier
 from apscheduler.scheduler import Scheduler
 import sqlalchemy.exc
+import requests
 
 sched = Scheduler()
 
 @sched.cron_schedule(hour='*/5')
 def load_rss():
 	# query the db: how long is it? Use this number later to empty db of old stories
-    exstories = db_session.query()
+    exstories = db_session.query(Stories).all()
+    last_id = exstories[-1].id
     sources = {"NPR News": 'http://www.npr.org/rss/rss.php?id=1001', "BBC": 'http://feeds.bbci.co.uk/news/rss.xml'}
     for source in sources:
         print source
@@ -33,9 +35,12 @@ def load_rss():
             db_session.add(story)
             print "added story to db"
             # commit
-            db_session.commit()
-            print "committed"
+        db_session.commit()
+        print "committed"
     # delete from db old stories
+    for l in range(1,last_id+1):
+        db_session.query(Stories).filter_by(id=l).delete()
+    db_session.commit()    
 
 
 
