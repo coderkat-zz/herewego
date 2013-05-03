@@ -1,7 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Date
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship, backref
+import datetime
 
 # db interactions with sessions
 engine = create_engine("sqlite:///news.db", echo=True)
@@ -9,6 +10,10 @@ session = scoped_session(sessionmaker(bind=engine, autocommit=False, autoflush=F
 
 Base = declarative_base()  # required for sqlalchemy magics
 Base.query = session.query_property()
+
+
+def now():
+    return datetime.datetime.now()
 
 # think about table names, not pluralizing ALL THE THINGS
 
@@ -48,6 +53,7 @@ class Queue(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     score = Column(Integer)  # calculated fisher probability for this item
     liked = Column(Integer)  # 0:Falst, 1:True
+    create_time = Column(DateTime, default=now())
 
     story = relationship("Stories", backref=backref("queue", order_by=id))
     user = relationship("Users", backref=backref("queue", order_by=id))

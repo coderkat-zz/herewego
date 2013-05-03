@@ -3,13 +3,14 @@ import feedparser
 from model import session as db_session, Users, Stories, FC, CC, Queue
 from classify.classifying import FisherClassifier
 from apscheduler.scheduler import Scheduler
+import sqlalchemy.exc
 
 sched = Scheduler()
 
 @sched.cron_schedule(hour='*/5')
 def load_rss():
 	# query the db: how long is it? Use this number later to empty db of old stories
-
+    exstories = db_session.query()
     sources = {"NPR News": 'http://www.npr.org/rss/rss.php?id=1001', "BBC": 'http://feeds.bbci.co.uk/news/rss.xml'}
     for source in sources:
         print source
@@ -37,6 +38,7 @@ def load_rss():
     # delete from db old stories
 
 
+
 @sched.cron_scheduler(hour='*/6')
 def classify():
     # perform Fisher Classifier method for ALL users in db
@@ -44,25 +46,10 @@ def classify():
     users = model.session.query(model.Users).all()
     # for each user create queue of most appropriate stories
     for i in users:
-        print i.id
-
-
-
-
-
-   
-    #form_email and form_password must both exist and match in db for row to be an object. Row is the entire row from the users table, including the id
-    row = model.session.query(model.Users).filter_by(email=form_email, password=form_password).first()
-
-    if row:
-        session['email'] = request.form['email']
-        session['user_id'] = row.id
-
-        flash('Logged in as: ' + session['email'])
-        # classifying all urls in db.
-        FisherClassifier.perform(session['user_id'])
+        # classifying all urls in db, add new best-rated stories to Queue, remove old stories from Queue
+        FisherClassifier.perform(i.id)
         # grab all items in queue
-        queue_list = model.session.query(model.Queue).all()
+        queue_list = model.session.query(model.Queue).all()        
         # pull story info by using queued story_id reference???
         story_list = []
         for i in queue_list:

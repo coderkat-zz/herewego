@@ -187,9 +187,12 @@ class FisherClassifier(Classifier):
 	# classify and pull relevant news stories for user's feed!
 	@staticmethod 
 	def perform(user_id):
-		#start by clearing current queue db table for user
-		db_session.query(Queue).filter(Queue.user_id==user_id).delete()
-		db_session.commit()
+        # grab range of current queue ids for user
+        exist_q = db_session.session.query(Queue).filter_by(user_id=i.id).all()
+        exist = []
+        for s in exist_q:
+            exist.append(s.id)
+
 		# grab all RSS stories from Story table of db
 		stories = db_session.query(Stories).all()
 		# set up a queue for ranked stories
@@ -211,11 +214,8 @@ class FisherClassifier(Classifier):
 				# queue[item.id]=probability
 		# sort queue by probability, lowest --> highest
 		queue = sorted(queue, key=lambda x: x[1])
-		print queue
 		
-
-
-		# grab top and lower rated stories
+		# grab top and lower rated stories, add to Queue 
 		if len(queue)>=10:
 			for i in queue[:2]:
 				story_id = i[0]
@@ -229,8 +229,6 @@ class FisherClassifier(Classifier):
 				# add story, user, and probabiilty to the db for pulling articles for users
 				story = Queue(story_id=story_id, score=score, user_id=user_id)
 				db_session.add(story)
-			# remove old queue stories (items 0-9)
-			
 			db_session.commit()
 		else:
 			for i in queue:
@@ -239,8 +237,14 @@ class FisherClassifier(Classifier):
 				# add story, user, and probabiilty to the db for pulling articles for users
 				story = Queue(story_id=story_id, score=score, user_id=user_id)
 				db_session.add(story)
-				db_session.commit()
-		
+			db_session.commit()
+
+		# clear old stories out of queue once new have been added
+		for i in exist:
+			d = db_session.query(Queue).filter_by(id=i).first()
+			db_session.delete(d)
+		db_session.commit()
+
 
 	# set mins and get values (default to 0)
 	def setminimum(self, cat, min):
