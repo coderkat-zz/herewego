@@ -2,7 +2,7 @@
 
 <head>
 	{% block head %}
-	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="css/bootstrap.css") }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="Flat-UI-master/css/flat-ui.css") }}">
 	<title>{% block title %}{% endblock %}</title>
 		{% endblock %}
 
@@ -12,7 +12,8 @@
 	<div class="wrapper">
 	<div class="container-fluid" >
 
-
+	<div class="navbar">
+		<div class="navbar-inner"
  {% if session['email'] %}
 
   <!-- Sign-in status-->
@@ -22,6 +23,8 @@
 	  <div align=right><a href="{{ url_for('login') }}">Click here to login.</a></div>
 
 	{% endif %}
+</div>
+</div>
 
 	{% with messages = get_flashed_messages() %}
 		{% if messages %}
@@ -32,8 +35,13 @@
 	{% endwith %}
 
 
+<div class="demo-browser-content">
+<div class="palette">
+
 	{% block content %}{% endblock %}
 
+</div>
+</div>
 </div>
 </div>
 </body>

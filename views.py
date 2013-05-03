@@ -2,7 +2,7 @@ import os, sys
 from flask import Flask, render_template, redirect, request, session
 from flask import url_for, g, flash
 import model
-from model import session as db_session, Users, Stories, FC, CC, Queue
+from model import session as db_session, Users, Stories, InitStories, FC, CC, Queue
 import pyres
 from pyres import ResQ
 from classify.classifying import Classifier, FisherClassifier
@@ -17,10 +17,54 @@ app.secret_key = SECRET_KEY
 r = ResQ(server="localhost:6379")
 
 
+@app.teardown_request
+def shutdown_session(exception = None):
+    db_session.remove()
+
+
+@app.before_request
+def load_user_id():
+    g.user_id = session.get('user_id')
+
+
 @app.route("/")
 def index():
     # build this page so users can sign up, take a tour, log in
     return render_template("index.html")
+
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
+
+
+@app.route("/validate", methods=['POST'])
+def validate_login():
+    # TODO: GO THROUGH AND SANITIZE STUFF --> will need to encode form input to match what's encoded in the database (using urllib.quote())
+    form_email = request.form['email']
+    form_password = request.form['password']
+    #form_email and form_password must both exist and match in db for row to be an object. Row is the entire row from the users table, including the id
+    row = model.session.query(model.Users).filter_by(email=form_email, password=form_password).first()
+
+    if row:
+        session['email'] = request.form['email']
+        session['user_id'] = row.id
+
+        flash('Logged in as: ' + session['email'])
+        # classifying all urls in db.
+        FisherClassifier.perform(session['user_id'])
+        # grab all items in queue
+        queue_list = model.session.query(model.Queue).all()
+        # pull story info by using queued story_id reference???
+        story_list = []
+        for i in queue_list:
+            story_list.append(model.session.query(model.Stories).filter_by(id=i.story_id).first())
+
+        return render_template("news.html", story_list=story_list)
+
+    else:
+        flash('Please enter a valid email address and password.')
+        return redirect("/login")
 
 
 @app.route("/signup", methods=['POST'])
@@ -42,6 +86,11 @@ def signup():
 
 @app.route("/selection")
 def selection():
+    #make sure user is signed in
+    # if not g.user_id:
+    #     flash("Please log in first!")
+    #     return redirect(url_for('login'))
+    # else:
     # grab all items in queue
     queue_list = model.session.query(model.InitStories).all()
     # pull story info by using queued story_id reference???
@@ -81,45 +130,13 @@ def firstdislike():
     return redirect(url_for('selection'))
 
 
-@app.route("/login", methods=["GET"])
-def login():
-    return render_template("login.html")
-
-
-@app.route("/validate", methods=['POST'])
-def validate_login():
-    # TODO: GO THROUGH AND SANITIZE STUFF --> will need to encode form input to match what's encoded in the database (using urllib.quote())
-    form_email = request.form['email']
-    form_password = request.form['password']
-    #form_email and form_password must both exist and match in db for row to be an object. Row is the entire row from the users table, including the id
-    row = model.session.query(model.Users).filter_by(email=form_email, password=form_password).first()
-
-    if row:
-        session['email'] = request.form['email']
-        session['user_id'] = row.id
-
-        flash('Logged in as: ' + session['email'])
-	    # classifying all urls in db.
-        FisherClassifier.perform(session['user_id'])
-	    # grab all items in queue
-        queue_list = model.session.query(model.Queue).all()
-	    # sort queue_list by prob, then only use top and low to limit stories shown
-
-        print queue_list
-
-	    # pull story info by using queued story_id reference???
-        story_list = []
-        for i in queue_list:
-            story_list.append(model.session.query(model.Stories).filter_by(id=i.story_id).first())
-
-        return render_template("news.html", story_list=story_list)
-    else:
-        flash('Please enter a valid email address and password.')
-        return redirect("/login")
-
-
 @app.route("/news")
 def news():
+    #make sure user is signed in
+    # if not g.user_id:
+    #     flash("Please log in first!")
+    #     return redirect(url_for('login'))
+    # else:
     queue_list = model.session.query(model.Queue).all()
     story_list = []
     for i in queue_list:
@@ -137,6 +154,7 @@ def like():
 	story = model.session.query(model.Stories).filter_by(id=story_id).first()
 	# add the classifier job to the pyres queue
 	r.enqueue(Classifier, story.url, user_id, "yes")
+
 	# return user to news page,  
 	return redirect(url_for('news'))
 

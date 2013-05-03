@@ -22,15 +22,16 @@
 
 
 	    <div class="row">
+
     <div class="span2"> 
 	  <form action="{{ url_for('like') }}" method="post">
 		<input type="hidden" name="story_id" value={{ story.id  }}>
-		  <button  class="btn-small" type="submit" value="Submit">Yes</button></form>
+		  <button  class="btn-large" type="submit" value="Submit">Yes</button></form>
 		</div> <!-- span4 -->
 	<div class="span2">
 		<form action="{{ url_for('dislike') }}" method="post">
 		  <input type="hidden" name="story_id" value={{ story.id }}>
-			<button  class="btn-small" type="submit" value="Submit">No</button></form>
+			<button  class="btn-large" type="submit" value="Submit">No</button></form>
 		</div><!--span4-->
 
     </div><!--endrow-->

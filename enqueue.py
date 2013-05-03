@@ -1,7 +1,7 @@
 from redis import Redis
 from rq import Queue
 from feedseed import load_stories
-from apscheduler.scheduler import Scheduler 
+from apscheduler.scheduler import Scheduler
 
 sched = Scheduler()
 
@@ -12,8 +12,10 @@ import model
 import sqlalchemy.exc
 from model import session as db_session, Stories 
 
+
 @sched.interval_schedule(hours=3)
 def result():
-	q.enqueue(load_stories, model.session)
+    q.enqueue(load_stories, model.session)
+
 
 sched.start()

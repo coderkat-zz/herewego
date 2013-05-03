@@ -76,6 +76,7 @@ class Classifier:
 			classifier.train(item, classification)
 
 
+
 	# method that opens the dbfile for this classifier and creates
 	# tables if necessary
 	def setdb(self, dbfile):
@@ -213,6 +214,7 @@ class FisherClassifier(Classifier):
 		print queue
 		
 
+
 		# grab top and lower rated stories
 		if len(queue)>=10:
 			for i in queue[:2]:
@@ -227,7 +229,8 @@ class FisherClassifier(Classifier):
 				# add story, user, and probabiilty to the db for pulling articles for users
 				story = Queue(story_id=story_id, score=score, user_id=user_id)
 				db_session.add(story)
-
+			# remove old queue stories (items 0-9)
+			
 			db_session.commit()
 		else:
 			for i in queue:
