@@ -130,6 +130,21 @@ def firstdislike():
     return redirect(url_for('selection'))
 
 
+@app.route("/first")
+def first_news():
+    # classifying all urls in db, add new best-rated stories to Queue, remove old stories from Queue
+    FisherClassifier.perform(session['user_id'])
+    # grab all items in queue
+    queue_list = model.session.query(model.Queue).filter_by(user_id=session['user_id']).all()        
+    # pull story info by using queued story_id reference???
+    story_list = []
+    for i in queue_list:
+        story_list.append(model.session.query(model.Stories).filter_by(id=i.story_id).first())
+
+    return render_template("news.html", story_list=story_list)
+
+
+
 @app.route("/news")
 def news():
     #make sure user is signed in

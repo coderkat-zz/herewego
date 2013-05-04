@@ -185,10 +185,10 @@ class FisherClassifier(Classifier):
 	
 
 	# classify and pull relevant news stories for user's feed!
-    @staticmethod 
-    def perform(user_id):
+    # @staticmethod 
+    def perform(self, user_id):
         # grab range of current queue ids for user
-        exist_q = db_session.session.query(Queue).filter_by(user_id=i.id).all()
+        exist_q = db_session.query(Queue).filter_by(user_id=user_id).all()
         exist = []
         for s in exist_q:
             exist.append(s.id)
@@ -203,7 +203,12 @@ class FisherClassifier(Classifier):
                 doc = Classifier.gettext(item.url) # strong of article words
             except Exception:
                 pass
-            cl = FisherClassifier(Classifier.getwords, user_id) # returns instance 
+            cl = FisherClassifier(Classifier.getwords, user_id) # returns FC instance
+            print cl
+            print cl. getfeatures
+            print cl.user_id
+            print cl.cprob
+
             cl.setdb('news.db')
             # find the probability that a user will like a given article
             probability = cl.fisherprob(doc, 'yes')
@@ -249,10 +254,13 @@ class FisherClassifier(Classifier):
 	# set mins and get values (default to 0)
 	def setminimum(self, cat, min):
 		self.minimums[cat] = min
+
+
 	def getminimum(self, cat):
 		if cat not in self.minimums:
 			return 0
 		return self.minimums[cat]
+
 
 	def cprob(self, f, cat):
 		# frequency of this feature in this category
@@ -265,10 +273,10 @@ class FisherClassifier(Classifier):
 		p = clf / (freqsum)
 		return p # the probability that an item w/feature belongs in specified category, assuming equal items in each cat.
 
+
 	# estimate overall probability: mult all probs together, take log, mult by -2
 	def fisherprob(self, item, cat):
-		# multiply all probabilities together
-	
+		# multiply all probabilities together	
 		features = self.getwords(item) # list of words
 		p = 1
 		for f in features: # iterate through list

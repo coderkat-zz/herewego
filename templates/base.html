@@ -10,7 +10,6 @@
 
 <body>
 	<div class="wrapper">
-	<div class="container-fluid" >
 
 	<div class="navbar">
 		<div class="navbar-inner"
@@ -18,11 +17,13 @@
 
   <!-- Sign-in status-->
   <div align=right>You are currently signed in as: {{ session['email'] }}.</div>
+  <div align=right><a href="{{ url_for('logout') }}">Log Me Out</a></div>
 
 	{% else %}
 	  <div align=right><a href="{{ url_for('login') }}">Click here to login.</a></div>
 
 	{% endif %}
+
 </div>
 </div>
 
@@ -34,13 +35,13 @@
 		{% endif %}
 	{% endwith %}
 
+<div class="wrapper">
+<div class="container-fluid">
 
-<div class="demo-browser-content">
-<div class="palette">
 
 	{% block content %}{% endblock %}
 
-</div>
+
 </div>
 </div>
 </div>

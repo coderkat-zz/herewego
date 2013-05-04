@@ -1728,7 +1728,8 @@ textarea,
   border-radius: 6px;
   padding: 14px;
   position: relative;
-  text-align: center; }
+  text-align: center; 
+  margin-bottom: 25px;}
   .tile.tile-hot:before {
     background: url("../images/tile/ribbon.png") 0 0 no-repeat;
     background-size: 82px 82px;
@@ -2340,7 +2341,7 @@ body.vjs-full-window {
 .login-screen {
   background-color: #1abc9c;
   min-height: 317px;
-  padding: 123px 199px 33px 306px; }
+  padding: 123px 199px 33px 306px;}
 
 .login-icon {
   left: 200px;
@@ -2366,6 +2367,10 @@ body.vjs-full-window {
   background-color: #eceff1;
   border-radius: 6px;
   padding: 24px 23px 20px;
+  margin-bottom: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 350px;
   position: relative; }
   .login-form:before {
     content: "";
